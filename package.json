@@ -1,0 +1,11 @@
+{
+  "name": "teamworkflow",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Quadro de trabalho para a equipa: tarefas por pessoa, renovação mensal, histórico e férias. Site estático.",
+  "scripts": {
+    "start": "npx --yes serve -l 8080 .",
+    "test": "node --test test/*.test.js"
+  }
+}
