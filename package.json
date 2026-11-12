@@ -1,11 +1,18 @@
 {
-  "name": "teamworkflow",
+  "name": "teoria-workflow",
   "version": "2.0.0",
-  "private": true,
+  "description": "Teoria Workflow: quadro de trabalho da equipa com contas, tópicos, projetos, aprovações, chat, renovação mensal, histórico e ausências.",
   "type": "module",
-  "description": "Quadro de trabalho para a equipa: tarefas por pessoa, renovação mensal, histórico e férias. Site estático.",
+  "private": true,
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
-    "start": "npx --yes serve -l 8080 .",
+    "start": "node server.js",
+    "dev": "SEED_DEMO=1 node --watch server.js",
     "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "nodemailer": "10.2.1"
   }
 }

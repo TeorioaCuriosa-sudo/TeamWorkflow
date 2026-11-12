@@ -1,0 +1,9 @@
+-Topicos/ criar e remover topicos 
+-Remover pessoas, mas so admins
+-Nos quadradinhos colcoar umm botao de nova tarefa
+-Trocar o nome para teoria workflow + icon 
+-Dar uptades na tarefa e dizer os estado da mesma + alteracoes que seja necessario autorizacoes = mandar notificaoes (email)
+-Dizer estado das pessoas 
+-chat
+-opcao para lihght mode e dark mode 
+-

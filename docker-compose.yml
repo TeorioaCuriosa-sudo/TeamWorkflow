@@ -1,0 +1,14 @@
+services:
+  teoria-workflow:
+    build: .
+    container_name: teoria-workflow
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # Só acessível a partir do próprio servidor: o proxy inverso (Cloudflare Tunnel, Caddy, nginx…) publica o endereço.
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - teoria-workflow-data:/data
+
+volumes:
+  teoria-workflow-data:

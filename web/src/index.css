@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+/* ---------- Tipo de letra: Inter (licença OFL em assets/fonts), servida pelo próprio servidor ---------- */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("./assets/fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("./assets/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* O modo escuro é o atributo data-theme="dark" no <html> (ver public/theme.js). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ======================================================================
+   Cores e sombras. Tudo o que a interface usa vem destas variáveis, por isso
+   mudar o aspeto (ou o tema escuro) é mexer só aqui.
+   ====================================================================== */
+:root {
+  color-scheme: light;
+  --canvas: #f5f4f2;
+  --surface: #ffffff;
+  --surface-2: #faf9f8;
+  --surface-3: #f0efed;
+  --ink: #1d1d20;
+  --ink-2: #48484e;
+  --ink-3: #6b6b72;
+  --line: #e6e4e1;
+  --line-strong: #d2cfca;
+
+  /* Marca Teoria Curiosa: dourado #CC8F1C e carvão #2F2F32. */
+  --primary: #cc8f1c;
+  --primary-hover: #b97f12;
+  --on-primary: #1d1d20;
+  --ring: #b57a10;
+
+  --accent: #cc8f1c;
+  --accent-soft: #fbf0d9;
+  --accent-ink: #8a5c06;
+  --live: #16a34a;
+  --info: #2457d6;
+  --info-soft: #e8effe;
+  --warn: #a8570a;
+  --warn-soft: #fef1d6;
+  --danger: #c0352b;
+  --danger-soft: #fdecea;
+  --success: #157a3d;
+  --success-soft: #e2f4e8;
+
+  --sidebar: #2f2f32;
+  --sidebar-2: #3a3a3e;
+  --sidebar-ink: #f3f3f4;
+  --sidebar-ink-2: #adadb4;
+  --sidebar-line: #434348;
+  --sidebar-active: #46464b;
+
+  --shadow-card: 0 1px 2px rgb(29 29 32 / 6%), 0 1px 1px rgb(29 29 32 / 3%);
+  --shadow-pop: 0 10px 30px rgb(29 29 32 / 14%), 0 2px 6px rgb(29 29 32 / 8%);
+  --shadow-modal: 0 24px 70px rgb(20 20 22 / 30%), 0 4px 12px rgb(20 20 22 / 12%);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #121214;
+  --surface: #1b1b1e;
+  --surface-2: #17171a;
+  --surface-3: #131316;
+  --ink: #efeff0;
+  --ink-2: #b5b5bc;
+  --ink-3: #8b8b94;
+  --line: #2a2a2e;
+  --line-strong: #3a3a40;
+
+  --primary: #d9a032;
+  --primary-hover: #e6b04a;
+  --on-primary: #1d1d20;
+  --ring: #e0a73c;
+
+  --accent: #d9a032;
+  --accent-soft: #3a2d12;
+  --accent-ink: #ebb855;
+  --live: #34d37b;
+  --info: #8aaeff;
+  --info-soft: #172544;
+  --warn: #f0b34a;
+  --warn-soft: #3a2b0e;
+  --danger: #ff8f84;
+  --danger-soft: #3a1a16;
+  --success: #62cf95;
+  --success-soft: #12321f;
+
+  --sidebar: #0e0e10;
+  --sidebar-2: #19191c;
+  --sidebar-ink: #efeff0;
+  --sidebar-ink-2: #8d8d96;
+  --sidebar-line: #232327;
+  --sidebar-active: #27272c;
+
+  --tint-fg: 48%;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-pop: 0 12px 34px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 40%);
+  --shadow-modal: 0 28px 80px rgb(0 0 0 / 65%);
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-live: var(--live);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-2: var(--sidebar-2);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-ink-2: var(--sidebar-ink-2);
+  --color-sidebar-line: var(--sidebar-line);
+  --color-sidebar-active: var(--sidebar-active);
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-modal: var(--shadow-modal);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1, h2, h3 { letter-spacing: -0.015em; }
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]), select, summary { cursor: pointer; }
+  button:disabled { cursor: default; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 6px; }
+  ::selection { background: color-mix(in srgb, var(--ring) 30%, transparent); }
+  /* Enquanto há um diálogo aberto, a página por trás não faz scroll (sem JavaScript). */
+  body:has(dialog[open]) { overflow: hidden; }
+
+  input, select, textarea { font: inherit; color: inherit; }
+  input::placeholder, textarea::placeholder { color: var(--ink-3); opacity: 0.8; }
+
+  dialog { color: var(--ink); }
+  dialog::backdrop { background: rgb(7 13 20 / 55%); backdrop-filter: blur(3px); }
+  dialog[open] { animation: pop-in 160ms cubic-bezier(0.2, 0.9, 0.3, 1.1); }
+  dialog[open]::backdrop { animation: fade-in 160ms ease-out; }
+
+  /* Barras de scroll discretas */
+  * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 55%, transparent); }
+  100% { box-shadow: 0 0 0 7px transparent; }
+}
+
+
+/* ======================================================================
+   Pequenas "receitas" reutilizadas: cores de etiquetas e de pessoas.
+   Quem as usa só tem de definir --c (a cor) no elemento.
+   ====================================================================== */
+@utility tint {
+  background: color-mix(in srgb, var(--c) 13%, var(--surface));
+  color: color-mix(in srgb, var(--c) var(--tint-fg, 80%), var(--ink));
+}
+@utility tint-line {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 28%, transparent);
+}
+@utility bar-ferias {
+  background: var(--m);
+  color: #fff;
+}
+@utility bar-ausencia {
+  background: repeating-linear-gradient(135deg, var(--m) 0 7px, color-mix(in srgb, var(--m) 62%, #fff) 7px 14px);
+  color: #fff;
+}
+@utility bar-formacao {
+  background: color-mix(in srgb, var(--m) 16%, var(--surface));
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--m);
+}
+@utility scroll-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.num { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
