@@ -11,7 +11,7 @@ import { FormError } from '../ui/misc';
 const POINTS = [
   { icon: <Users />, title: 'Quadro partilhado em direto', text: 'Cada pessoa com as suas tarefas; as alterações aparecem a todos na hora.' },
   { icon: <CircleCheck />, title: 'Aprovações com registo', text: 'Pede e dá aprovação a uma tarefa, com notas e avisos por email.' },
-  { icon: <CalendarDays />, title: 'Ausências e histórico', text: 'Férias, formações e o arquivo mensal do que ficou feito.' },
+  { icon: <CalendarDays />, title: 'Calendário e histórico', text: 'Férias, formações, reuniões com link de videochamada e o arquivo mensal do que ficou feito.' },
   { icon: <MessageSquare />, title: 'Chat da equipa', text: 'Um canal único para o dia a dia, sem sair da plataforma.' },
 ];
 

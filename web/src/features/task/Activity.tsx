@@ -24,7 +24,7 @@ function EventRow({ event: e }: { event: TaskEvent }) {
   if (e.type === 'comment') {
     body = <p className="mt-1 rounded-lg rounded-tl-sm bg-surface-3 px-3 py-2 text-[13.5px] leading-relaxed break-words whitespace-pre-wrap text-ink">{linkify(e.text)}</p>;
   } else if (e.type === 'status') {
-    body = <p className="mt-0.5 text-[13px] text-ink-2">→ {e.text}</p>;
+    body = <p className="mt-0.5 text-[13px] text-ink-2">→ {e.meta.urgency ? e.text.replace(/^Urgência: /, '') : e.text}</p>;
   } else if (e.type === 'assigned' || e.type === 'approval') {
     body = <p className="mt-0.5 text-[13px] text-ink-2">{e.text}</p>;
   } else if (e.type === 'created' && !author && e.text) {
@@ -41,7 +41,7 @@ function EventRow({ event: e }: { event: TaskEvent }) {
       <div className="min-w-0 flex-1">
         <p className="text-[13px] leading-tight">
           <b className="font-semibold text-ink">{author?.name ?? 'Sistema'}</b>
-          {VERB[e.type] && <span className="text-ink-3"> {VERB[e.type]}</span>}
+          {VERB[e.type] && <span className="text-ink-3"> {e.type === 'status' && e.meta.urgency ? 'mudou a urgência' : VERB[e.type]}</span>}
           <span className="text-ink-3" title={dateLabel(e.created_at)}> · {timeAgo(e.created_at)}</span>
         </p>
         {body}
@@ -51,10 +51,12 @@ function EventRow({ event: e }: { event: TaskEvent }) {
 }
 
 /** O fio de atualizações de uma tarefa, com o formulário para escrever uma nova. */
-export function ActivitySection({ task, detail, readOnly, onPublished }: {
+export function ActivitySection({ task, detail, readOnly, canSetStatus, onPublished }: {
   task: Task;
   detail: TaskDetail | null;
   readOnly: boolean;
+  /** Só quem tem a tarefa (ou um administrador) muda o estado; os outros só escrevem. */
+  canSetStatus: boolean;
   onPublished: (next: TaskDetail) => void;
 }) {
   const [text, setText] = useState('');
@@ -70,7 +72,7 @@ export function ActivitySection({ task, detail, readOnly, onPublished }: {
     setError('');
     setBusy(true);
     try {
-      const next = await post<TaskDetail>(`/api/tasks/${task.id}/events`, { text, status });
+      const next = await post<TaskDetail>(`/api/tasks/${task.id}/events`, { text, ...(canSetStatus ? { status } : {}) });
       setText('');
       onPublished(next);
     } catch (ex) {
@@ -100,16 +102,18 @@ export function ActivitySection({ task, detail, readOnly, onPublished }: {
             className="bg-surface"
           />
           <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-2 text-[13px] text-ink-2">
-              Estado
-              <div className="w-40">
-                <Select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className="h-8 text-[13px]">
-                  {(Object.keys(TASK_STATUS) as TaskStatus[]).map((k) => <option key={k} value={k}>{TASK_STATUS[k]}</option>)}
-                </Select>
-              </div>
-            </label>
+            {canSetStatus && (
+              <label className="flex items-center gap-2 text-[13px] text-ink-2">
+                Estado
+                <div className="w-40">
+                  <Select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className="h-8 text-[13px]">
+                    {(Object.keys(TASK_STATUS) as TaskStatus[]).map((k) => <option key={k} value={k}>{TASK_STATUS[k]}</option>)}
+                  </Select>
+                </div>
+              </label>
+            )}
             <span className="flex-1" />
-            <Button type="submit" variant="primary" size="sm" loading={busy} disabled={!text.trim() && status === task.status} icon={<Send className="size-3.5" />}>Publicar</Button>
+            <Button type="submit" variant="primary" size="sm" loading={busy} disabled={!text.trim() && (!canSetStatus || status === task.status)} icon={<Send className="size-3.5" />}>Publicar</Button>
           </div>
           <FormError>{error}</FormError>
         </form>

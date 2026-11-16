@@ -72,9 +72,9 @@ export function RecurringSection() {
   return (
     <SettingsSection
       title="Tarefas mensais recorrentes"
-      hint="Voltam como nova tarefa mensal no início de cada mês, com o mesmo projeto e tópicos. Alterar o título aplica-se a partir do próximo mês. Apagar uma tarefa recorrente remove também a cópia deste mês, se ainda estiver por fazer."
+      hint={`Voltam como nova tarefa mensal em Pendentes no início de cada mês, com o mesmo projeto e tópicos. Se a do mês anterior não ficou concluída, é essa que passa para o mês novo (não nasce uma repetida). Alterar o título aplica-se a partir do próximo mês. Apagar uma tarefa recorrente remove também a cópia deste mês, se ainda estiver por fazer.${team.isAdmin ? '' : ' Cada pessoa gere as suas.'}`}
     >
-      {team.board.map((m) => {
+      {team.board.filter((m) => team.isAdmin || m.id === team.me.id).map((m) => {
         const list = data.recurring.filter((r) => r.member_id === m.id);
         return (
           <div key={m.id} className="grid gap-3">

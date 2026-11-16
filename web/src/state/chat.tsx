@@ -102,6 +102,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return () => { offMsg(); offDel(); };
   }, [addMessage, update]);
 
+  useEffect(() => {
+    const onVisible = () => { if (!document.hidden && viewing.current) markRead(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [markRead]);
+
   const send = useCallback(async (text: string) => {
     try {
       const msg = await post<ChatMessage>('/api/chat', { text });

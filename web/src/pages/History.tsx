@@ -38,7 +38,7 @@ export function HistoryPage() {
       <Card className="p-5">
         <h2 className="text-[15px] font-semibold text-ink">Como se renova cada mês</h2>
         <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-ink-3">
-          No primeiro dia do mês o quadro abre sozinho um mês novo. As tarefas mensais recorrentes voltam como novas, as semanais/diárias por concluir e tudo o que está em progresso passam para o mês novo, e o que ficou concluído fica guardado aqui. As mensais que ninguém concluiu ficam no arquivo do mês a que pertenciam.
+          No primeiro dia do mês o quadro abre sozinho um mês novo. Tudo o que ficou por concluir (mensais, semanais e o que estava em progresso) passa para o mês novo, e o que ficou concluído fica guardado aqui. As mensais recorrentes voltam a aparecer em Pendentes, sem repetir a que transitou.
         </p>
       </Card>
 
@@ -80,6 +80,9 @@ export function HistoryPage() {
                 </div>
                 {mo.carried > 0 && (
                   <p className="text-[13px] text-ink-3">{plural(mo.carried, 'tarefa transitou', 'tarefas transitaram')} do mês anterior.</p>
+                )}
+                {mo.carried_out > 0 && (
+                  <p className="text-[13px] text-ink-3">{plural(mo.carried_out, 'tarefa ficou por concluir e passou', 'tarefas ficaram por concluir e passaram')} para o mês seguinte.</p>
                 )}
                 <div className="flex flex-wrap gap-2 border-t border-line pt-4">
                   <LinkButton size="sm" href={hrefFor('workflow', current ? null : mo.month)} icon={<ExternalLink className="size-3.5" />}>Abrir quadro</LinkButton>

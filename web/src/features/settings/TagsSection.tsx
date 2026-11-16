@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Folder, Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
 import { del, patch, post } from '../../api/client';
 import type { Tag } from '../../api/types';
-import { useData } from '../../state/data';
+import { useData, useTeam } from '../../state/data';
 import { Button, IconButton } from '../../ui/Button';
 import { Chip } from '../../ui/Chip';
 import { ColorPicker } from '../../ui/ColorPicker';
@@ -11,7 +11,7 @@ import { CommitInput, Input } from '../../ui/Fields';
 import { useConfirm } from '../../ui/Modal';
 import { SettingsSection } from './SettingsSection';
 
-function TagBlock({ kind, items, singular, plural }: { kind: 'topics' | 'projects'; items: Tag[]; singular: string; plural: string }) {
+function TagBlock({ kind, items, singular, plural, editable }: { kind: 'topics' | 'projects'; items: Tag[]; singular: string; plural: string; editable: boolean }) {
   const { data, mutate } = useData();
   const confirm = useConfirm();
   const [name, setName] = useState('');
@@ -31,7 +31,12 @@ function TagBlock({ kind, items, singular, plural }: { kind: 'topics' | 'project
         {plural}
       </h3>
       {items.length === 0 && <p className="text-[13px] text-ink-3">Ainda não há {plural.toLowerCase()}.</p>}
-      <ul className="grid gap-2">
+      {!editable && items.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {items.map((it) => <li key={it.id}><Chip kind={kind === 'topics' ? 'topic' : 'project'} color={it.color}>{it.name}</Chip></li>)}
+        </ul>
+      )}
+      {editable && <ul className="grid gap-2">
         {items.map((it) => (
           <li key={it.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-surface-2 px-3 py-2.5">
             <Chip kind={kind === 'topics' ? 'topic' : 'project'} color={it.color} className="shrink-0">{it.name}</Chip>
@@ -50,7 +55,7 @@ function TagBlock({ kind, items, singular, plural }: { kind: 'topics' | 'project
             </IconButton>
           </li>
         ))}
-      </ul>
+      </ul>}
       <form onSubmit={add} className="flex gap-2">
         <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder={`Novo ${singular}…`} aria-label={`Nome do novo ${singular}`} />
         <Button type="submit" icon={<Plus className="size-4" />} disabled={!name.trim()}>Adicionar</Button>
@@ -61,14 +66,16 @@ function TagBlock({ kind, items, singular, plural }: { kind: 'topics' | 'project
 
 export function TagsSection() {
   const { data } = useData();
+  const team = useTeam();
+  const editable = team.can.manage_tags;
   return (
     <SettingsSection
       title="Tópicos e projetos"
-      hint="Os tópicos são etiquetas coloridas (cada tarefa pode ter várias). Os projetos agrupam tarefas (cada tarefa tem no máximo um). Ambos servem para filtrar o quadro."
+      hint={`Os tópicos são etiquetas coloridas (cada tarefa pode ter várias). Os projetos agrupam tarefas (cada tarefa tem no máximo um). Ambos servem para filtrar o quadro. Toda a gente os pode criar. ${editable ? '' : 'Só comandantes e administradores mudam o nome ou a cor e os apagam.'}`.trim()}
     >
-      <TagBlock kind="topics" items={data.topics} singular="tópico" plural="Tópicos" />
+      <TagBlock kind="topics" items={data.topics} singular="tópico" plural="Tópicos" editable={editable} />
       <div className="h-px bg-line" />
-      <TagBlock kind="projects" items={data.projects} singular="projeto" plural="Projetos" />
+      <TagBlock kind="projects" items={data.projects} singular="projeto" plural="Projetos" editable={editable} />
     </SettingsSection>
   );
 }

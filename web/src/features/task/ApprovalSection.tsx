@@ -3,6 +3,7 @@ import { Check, Clock, ShieldCheck, X } from 'lucide-react';
 import { errorMessage, post } from '../../api/client';
 import type { ApprovalStatus, Task, TaskDetail } from '../../api/types';
 import { timeAgo } from '../../lib/dates';
+import { ROLE_LABEL } from '../../lib/labels';
 import { useData, useTeam } from '../../state/data';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Chip';
@@ -15,10 +16,12 @@ const LABEL: Record<ApprovalStatus, string> = { pending: 'À espera', approved: 
 const TONE = { pending: 'warn', approved: 'success', rejected: 'danger', cancelled: 'neutral' } as const;
 
 /** Pedir, dar ou cancelar a aprovação de uma tarefa, e ver o histórico de pedidos. */
-export function ApprovalSection({ task, detail, readOnly, reload }: {
+export function ApprovalSection({ task, detail, readOnly, canRequest, reload }: {
   task: Task;
   detail: TaskDetail | null;
   readOnly: boolean;
+  /** Só quem tem a tarefa (ou um administrador) pede aprovação. */
+  canRequest: boolean;
   /** Volta a pedir os dados da tarefa ao servidor. */
   reload: () => Promise<void>;
 }) {
@@ -95,13 +98,13 @@ export function ApprovalSection({ task, detail, readOnly, reload }: {
             </div>
           )}
         </div>
-      ) : !readOnly ? (
+      ) : !readOnly && canRequest ? (
         options.length ? (
           <form onSubmit={request} className="grid gap-2 rounded-xl border border-line bg-surface-2 p-3">
             <div className="flex flex-wrap items-end gap-2">
               <Field label="Pedir aprovação a" className="min-w-40 flex-1">
                 <Select value={chosen ?? ''} onChange={(e) => setApprover(Number(e.target.value))} className="bg-surface">
-                  {options.map((m) => <option key={m.id} value={m.id}>{m.name}{m.role === 'admin' ? ' (admin)' : ''}</option>)}
+                  {options.map((m) => <option key={m.id} value={m.id}>{m.name}{m.role !== 'member' ? ` (${ROLE_LABEL[m.role]})` : ''}</option>)}
                 </Select>
               </Field>
               <Button type="submit" loading={busy}>Pedir aprovação</Button>
@@ -112,6 +115,8 @@ export function ApprovalSection({ task, detail, readOnly, reload }: {
         ) : (
           <p className="text-[13px] text-ink-3">Não há mais ninguém a quem pedir aprovação.</p>
         )
+      ) : !readOnly && !history.length ? (
+        <p className="text-[13px] text-ink-3">Só quem tem a tarefa (ou um administrador) pode pedir aprovação.</p>
       ) : null}
 
       {history.length > 0 && (

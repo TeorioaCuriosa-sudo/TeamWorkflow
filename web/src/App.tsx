@@ -1,14 +1,17 @@
 import { AppShell } from './layout/AppShell';
-import { AbsencesPage } from './pages/Absences';
+import { CalendarPage } from './pages/Calendar';
 import { ChatPage } from './pages/Chat';
 import { HistoryPage } from './pages/History';
 import { LoginPage } from './pages/Login';
+import { ProjectsPage } from './pages/Projects';
+import { TemplatesPage } from './pages/Templates';
 import { SettingsPage } from './pages/Settings';
 import { WorkflowPage } from './pages/Workflow';
 import { ForcedPasswordDialog } from './features/profile/ProfileDialog';
 import { ChatProvider } from './state/chat';
 import { DataProvider } from './state/data';
 import { DialogsProvider } from './state/dialogs';
+import { DmProvider } from './state/dm';
 import { useRoute } from './state/route';
 import { SessionProvider, useSession } from './state/session';
 import { ConfirmProvider } from './ui/Modal';
@@ -18,7 +21,9 @@ import { ToastProvider } from './ui/Toast';
 function Page() {
   const route = useRoute();
   switch (route.view) {
-    case 'ausencias': return <AbsencesPage />;
+    case 'calendario': return <CalendarPage />;
+    case 'projetos': return <ProjectsPage />;
+    case 'modelos': return <TemplatesPage />;
     case 'historico': return <HistoryPage />;
     case 'chat': return <ChatPage />;
     case 'definicoes': return <SettingsPage />;
@@ -31,13 +36,15 @@ function Authenticated() {
   return (
     <DataProvider month={route.view === 'workflow' ? route.month : null}>
       <ChatProvider>
-        <DialogsProvider>
-          <AppShell view={route.view}>
-            <div key={route.view} className="animate-[fade-in_160ms_ease-out]">
-              <Page />
-            </div>
-          </AppShell>
-        </DialogsProvider>
+        <DmProvider>
+          <DialogsProvider>
+            <AppShell view={route.view}>
+              <div key={route.view} className="animate-[fade-in_160ms_ease-out]">
+                <Page />
+              </div>
+            </AppShell>
+          </DialogsProvider>
+        </DmProvider>
       </ChatProvider>
     </DataProvider>
   );

@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { DragEndEvent, DragMoveEvent, DragStartEvent } from '@dnd-kit/core';
 import { DndContext, DragOverlay, KeyboardSensor, MouseSensor, TouchSensor, pointerWithin, rectIntersection, useSensor, useSensors } from '@dnd-kit/core';
 import type { CollisionDetection } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutTemplate, X } from 'lucide-react';
 import { patch } from '../api/client';
 import { ApprovalsPanel } from '../features/board/ApprovalsPanel';
 import type { DropHint } from '../features/board/Column';
@@ -12,10 +12,11 @@ import { CardView } from '../features/board/TaskCard';
 import { PresenceStrip } from '../features/people/PresenceStrip';
 import { cx } from '../lib/cx';
 import { addMonths, cap, monthLabel } from '../lib/dates';
-import { COLUMNS, columnOf, type ColumnKey } from '../lib/labels';
+import { URGENCY_LABEL, type ColumnKey } from '../lib/labels';
 import { absenceNow } from '../lib/people';
+import type { Urgency } from '../api/types';
 import { useData, useTeam } from '../state/data';
-import { go } from '../state/route';
+import { go, hrefFor } from '../state/route';
 import { Button, IconButton } from '../ui/Button';
 import { Select } from '../ui/Fields';
 import { useToast } from '../ui/Toast';
@@ -100,16 +101,17 @@ export function WorkflowPage() {
 
   async function moveTask(id: number, memberId: number, colKey: ColumnKey, beforeId: number | null) {
     const t = data.tasks.find((x) => x.id === id);
-    const col = COLUMNS.find((c) => c.key === colKey);
-    if (!t || !col) return;
-    if (t.member_id === memberId && columnOf(t) === colKey && colKey === 'done') return;
+    if (!t) return;
+    // Só o administrador passa tarefas de uma pessoa para outra; os outros só as movem no seu cartão.
+    if (!team.isAdmin && (t.member_id !== team.me.id || memberId !== team.me.id)) return;
+    if (t.member_id === memberId && t.status === colKey && colKey === 'done') return;
     const payload = {
-      member_id: memberId,
-      ...col.patch,
+      ...(t.member_id !== memberId ? { member_id: memberId } : {}),
+      status: colKey,
       ...(colKey !== 'done' ? (beforeId ? { before_id: beforeId } : { to_end: true }) : {}),
     };
     const before = beforeId ? data.tasks.find((x) => x.id === beforeId) : undefined;
-    patchTask(id, { member_id: memberId, ...col.patch, position: before ? before.position - 0.5 : Date.now() });
+    patchTask(id, { member_id: memberId, status: colKey, position: before ? before.position - 0.5 : Date.now() });
     await mutate(() => patch(`/api/tasks/${id}`, payload));
     const m = team.member(memberId);
     if (m && absenceNow(data, memberId)) toast.show(`${m.name} está ausente hoje.`);
@@ -137,27 +139,45 @@ export function WorkflowPage() {
             <FilterChip key={m.id} pressed={filters.member === m.id} color={m.color} onClick={() => filters.set('member', m.id)}>{m.name}</FilterChip>
           ))}
         </div>
-        {(data.projects.length > 0 || data.topics.length > 0) && (
-          <div className="flex flex-wrap items-center gap-2">
-            {data.projects.length > 0 && (
-              <div className="w-44">
-                <Select aria-label="Filtrar por projeto" value={filters.project ?? ''} onChange={(e) => filters.set('project', Number(e.target.value) || null)}>
-                  <option value="">Todos os projetos</option>
-                  {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </Select>
-              </div>
-            )}
-            {data.topics.length > 0 && (
-              <div className="w-44">
-                <Select aria-label="Filtrar por tópico" value={filters.topic ?? ''} onChange={(e) => filters.set('topic', Number(e.target.value) || null)}>
-                  <option value="">Todos os tópicos</option>
-                  {data.topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </Select>
-              </div>
-            )}
-            {filters.tagFilterActive && <Button size="sm" variant="ghost" icon={<X className="size-4" />} onClick={filters.clearTags}>Limpar</Button>}
+        <div role="group" aria-label="Modelos de tarefas" className="flex items-center gap-1.5">
+          <LayoutTemplate aria-hidden className="size-4 text-ink-3" />
+          {(['monthly', 'weekly'] as const).map((k) => (
+            <a
+              key={k}
+              href={hrefFor('modelos', k)}
+              aria-label={k === 'monthly' ? 'Modelos de tarefas mensais' : 'Modelos de tarefas semanais'}
+              title={k === 'monthly' ? 'Modelos de tarefas mensais' : 'Modelos de tarefas semanais'}
+              className="inline-flex h-8 shrink-0 items-center rounded-full border border-line-strong bg-surface px-3 text-[13px] font-medium text-ink-2 transition-colors hover:bg-surface-3"
+            >
+              {k === 'monthly' ? 'Mensais' : 'Semanais'}
+            </a>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {data.projects.length > 0 && (
+            <div className="w-44">
+              <Select aria-label="Filtrar por projeto" value={filters.project ?? ''} onChange={(e) => filters.set('project', Number(e.target.value) || null)}>
+                <option value="">Todos os projetos</option>
+                {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </Select>
+            </div>
+          )}
+          {data.topics.length > 0 && (
+            <div className="w-44">
+              <Select aria-label="Filtrar por tópico" value={filters.topic ?? ''} onChange={(e) => filters.set('topic', Number(e.target.value) || null)}>
+                <option value="">Todos os tópicos</option>
+                {data.topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </Select>
+            </div>
+          )}
+          <div className="w-44">
+            <Select aria-label="Filtrar por urgência" value={filters.urgency ?? ''} onChange={(e) => filters.setUrgency((e.target.value || null) as Urgency | null)}>
+              <option value="">Todas as urgências</option>
+              {(['urgent', 'priority', 'critical'] as const).map((k) => <option key={k} value={k}>{URGENCY_LABEL[k]}</option>)}
+            </Select>
           </div>
-        )}
+          {filters.tagFilterActive && <Button size="sm" variant="ghost" icon={<X className="size-4" />} onClick={filters.clearTags}>Limpar</Button>}
+        </div>
       </div>
 
       {archived ? (

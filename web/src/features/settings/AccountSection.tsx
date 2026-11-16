@@ -1,5 +1,5 @@
 import { Monitor, Moon, Sun, User } from 'lucide-react';
-import { STATUS_LABEL } from '../../lib/labels';
+import { ROLE_LABEL, STATUS_LABEL } from '../../lib/labels';
 import { useTeam } from '../../state/data';
 import { useDialogs } from '../../state/dialogs';
 import { THEME_LABEL, useTheme, type ThemeMode } from '../../state/theme';
@@ -23,7 +23,7 @@ export function AccountSection() {
         <div className="min-w-0 flex-1 basis-56">
           <p className="flex items-center gap-2 text-sm font-semibold text-ink">
             {me.name}
-            <Badge>{me.role === 'admin' ? 'Administrador' : 'Membro'}</Badge>
+            <Badge>{ROLE_LABEL[me.role]}</Badge>
           </p>
           <p className="text-[13px] text-ink-3">{me.email} · {STATUS_LABEL[me.status]}{me.status_text ? ` · ${me.status_text}` : ''}</p>
         </div>

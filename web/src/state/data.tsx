@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { errorMessage, get } from '../api/client';
 import { live } from '../api/events';
-import type { AppState, Member, Tag, Task } from '../api/types';
+import type { AppState, Capabilities, Member, Tag, Task } from '../api/types';
 import { Button } from '../ui/Button';
 import { FullPageSpinner } from '../ui/misc';
 import { useToast } from '../ui/Toast';
@@ -153,6 +153,7 @@ export function DataProvider({ month, children }: { month: string | null; childr
 export interface Team {
   me: AppState['me'];
   isAdmin: boolean;
+  can: Capabilities;
   /** Pessoas que ainda existem (inclui as escondidas do quadro). */
   people: Member[];
   /** Pessoas que aparecem no quadro. */
@@ -172,6 +173,7 @@ export function useTeam(): Team {
     return {
       me: data.me,
       isAdmin: data.me.role === 'admin',
+      can: data.me.can,
       people: data.members.filter((m) => !m.removed),
       board: data.members.filter((m) => m.active && !m.removed),
       member: (id) => (id == null ? undefined : members.get(id)),

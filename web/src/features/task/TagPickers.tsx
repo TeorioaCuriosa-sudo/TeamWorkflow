@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { errorMessage, post } from '../../api/client';
 import type { Tag } from '../../api/types';
 import { cx, vars } from '../../lib/cx';
-import { useData } from '../../state/data';
+import { useData, useTeam } from '../../state/data';
 import { Button } from '../../ui/Button';
 import { Input, Select } from '../../ui/Fields';
 import { useToast } from '../../ui/Toast';
@@ -36,7 +36,9 @@ function useCreateTag(kind: 'topics' | 'projects') {
 
 export function TopicPicker({ value, onChange, disabled, allowCreate = true }: { value: number[]; onChange: (ids: number[]) => void; disabled?: boolean; allowCreate?: boolean }) {
   const { data } = useData();
+  const team = useTeam();
   const creator = useCreateTag('topics');
+  const canCreate = allowCreate && team.can.create_tags;
   const toggle = (id: number) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
 
   async function add() {
@@ -67,9 +69,9 @@ export function TopicPicker({ value, onChange, disabled, allowCreate = true }: {
             </button>
           );
         })}
-        {!data.topics.length && <span className="text-[13px] text-ink-3">{allowCreate ? 'Ainda não há tópicos. Cria o primeiro abaixo.' : 'Ainda não há tópicos.'}</span>}
+        {!data.topics.length && <span className="text-[13px] text-ink-3">{canCreate ? 'Ainda não há tópicos. Cria o primeiro abaixo.' : 'Ainda não há tópicos.'}</span>}
       </div>
-      {!disabled && allowCreate && (
+      {!disabled && canCreate && (
         <div className="flex gap-2">
           <Input
             value={creator.name}
@@ -89,6 +91,7 @@ export function TopicPicker({ value, onChange, disabled, allowCreate = true }: {
 
 export function ProjectPicker({ value, onChange, disabled }: { value: number | null; onChange: (id: number | null) => void; disabled?: boolean }) {
   const { data } = useData();
+  const team = useTeam();
   const creator = useCreateTag('projects');
 
   async function add() {
@@ -102,7 +105,7 @@ export function ProjectPicker({ value, onChange, disabled }: { value: number | n
         <option value="">Sem projeto</option>
         {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </Select>
-      {!disabled && (
+      {!disabled && team.can.create_tags && (
         <div className="flex gap-2">
           <Input
             value={creator.name}

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { Folder, X } from 'lucide-react';
+import { Flag, Folder, Siren, X, Zap } from 'lucide-react';
+import type { Urgency } from '../api/types';
+import { URGENCY_LABEL } from '../lib/labels';
 import { cx, vars } from '../lib/cx';
 
 interface ChipProps {
@@ -75,6 +77,24 @@ export function Badge({ tone = 'neutral', children, className, icon }: { tone?: 
     <span className={cx('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] leading-4 font-medium', TONES[tone], className)}>
       {icon}
       {children}
+    </span>
+  );
+}
+
+const URGENCY_STYLE: Record<Exclude<Urgency, 'normal'>, { cls: string; icon: ReactNode }> = {
+  priority: { cls: 'bg-info-soft text-info', icon: <Flag aria-hidden className="size-3" /> },
+  urgent: { cls: 'bg-warn-soft text-warn', icon: <Zap aria-hidden className="size-3" /> },
+  critical: { cls: 'bg-danger text-white dark:text-[#2a0d0a]', icon: <Siren aria-hidden className="size-3" /> },
+};
+
+/** Grau de urgência de uma tarefa. Não aparece quando é "normal". */
+export function UrgencyBadge({ urgency, className }: { urgency: Urgency; className?: string }) {
+  if (urgency === 'normal') return null;
+  const st = URGENCY_STYLE[urgency];
+  return (
+    <span title={`Urgência: ${URGENCY_LABEL[urgency]}`} className={cx('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] leading-4 font-semibold', st.cls, className)}>
+      {st.icon}
+      {URGENCY_LABEL[urgency]}
     </span>
   );
 }

@@ -13,10 +13,11 @@ test('tópicos: criar, nome único (sem distinguir maiúsculas), renomear, cor i
   assert.equal(a.status, 201);
   assert.equal(a.data.name, 'Clientes');
   assert.match(a.data.color, /^#[0-9a-f]{6}$/);
-  assert.equal((await t.users.Ana.call('POST', '/api/topics', { name: 'clientes' })).status, 409);
+  assert.equal((await t.users.Ana.call('POST', '/api/topics', { name: 'clientes' })).status, 409, 'um membro também cria tópicos, mas o nome é único');
   assert.equal((await t.admin.call('POST', '/api/topics', { name: '   ' })).status, 400);
   assert.equal((await t.admin.call('POST', '/api/topics', { name: 'X', color: 'vermelho' })).status, 400);
-  const renamed = await t.users.Bruno.call('PATCH', `/api/topics/${a.data.id}`, { name: 'Clientes VIP', color: '#7c3aed' });
+  assert.equal((await t.users.Bruno.call('PATCH', `/api/topics/${a.data.id}`, { name: 'Intruso' })).status, 403);
+  const renamed = await t.admin.call('PATCH', `/api/topics/${a.data.id}`, { name: 'Clientes VIP', color: '#7c3aed' });
   assert.equal(renamed.data.name, 'Clientes VIP');
   assert.equal((await t.admin.call('GET', '/api/state')).data.topics.length, 1);
   assert.equal((await t.admin.call('DELETE', `/api/topics/${a.data.id}`)).status, 200);
@@ -84,8 +85,8 @@ test('o histórico e o CSV incluem projeto e tópicos', async () => {
   const pj = (await t.admin.call('POST', '/api/projects', { name: 'CRM' })).data;
   await task(t.admin, { member_id: t.ids.Ana, title: 'Importar contactos', status: 'done', project_id: pj.id, topic_ids: [tp.id] });
   const csv = (await t.admin.call('GET', '/api/export/2026-10.csv')).data;
-  assert.match(csv, /Mês;Pessoa;Tarefa;Tipo;Estado;Projeto;Tópicos/);
-  assert.match(csv, /Importar contactos;Semanal\/diária;Concluída;CRM;Clientes/);
+  assert.match(csv, /Mês;Pessoa;Tarefa;Tipo;Estado;Urgência;Pedida por;Projeto;Tópicos/);
+  assert.match(csv, /Importar contactos;Semanal\/diária;Concluída;Normal;Administrador;CRM;Clientes/);
 });
 
 // ---------- atualizações ----------
@@ -94,7 +95,8 @@ test('a linha do tempo regista criação, estado, atribuição e atualizações'
   const t = await team();
   const tk = await task(t.users.Ana, { member_id: t.ids.Ana, title: 'Proposta' });
   await t.users.Ana.call('PATCH', `/api/tasks/${tk.id}`, { status: 'doing' });
-  await t.users.Ana.call('PATCH', `/api/tasks/${tk.id}`, { member_id: t.ids.Bruno });
+  assert.equal((await t.users.Ana.call('PATCH', `/api/tasks/${tk.id}`, { member_id: t.ids.Bruno })).status, 403, 'só o administrador passa tarefas a outra pessoa');
+  await t.admin.call('PATCH', `/api/tasks/${tk.id}`, { member_id: t.ids.Bruno });
   const upd = await t.users.Bruno.call('POST', `/api/tasks/${tk.id}/events`, { text: ' Falta só o preço. ', status: 'done' });
   assert.equal(upd.status, 201);
   const types = upd.data.events.map((e) => e.type);
@@ -112,10 +114,10 @@ test('a linha do tempo regista criação, estado, atribuição e atualizações'
 test('notificações: avisam o responsável e quem participou, nunca quem fez a ação', async () => {
   const t = await team();
   const tk = await task(t.users.Ana, { member_id: t.ids.Bruno, title: 'Relatório' });
-  // A Ana atribuiu ao Bruno: ele é avisado, ela não.
+  // A Ana (membro) pediu a tarefa ao Bruno: ele é avisado, ela não.
   let bruno = (await t.users.Bruno.call('GET', '/api/notifications')).data;
   assert.equal(bruno.unread, 1);
-  assert.match(bruno.items[0].text, /Ana atribuiu-te/);
+  assert.match(bruno.items[0].text, /Ana pediu-te/);
   assert.equal((await t.users.Ana.call('GET', '/api/notifications')).data.unread, 0);
 
   await t.users.Bruno.call('POST', `/api/tasks/${tk.id}/events`, { text: 'Comecei hoje.' });

@@ -1,9 +1,11 @@
--Topicos/ criar e remover topicos 
--Remover pessoas, mas so admins
--Nos quadradinhos colcoar umm botao de nova tarefa
--Trocar o nome para teoria workflow + icon 
--Dar uptades na tarefa e dizer os estado da mesma + alteracoes que seja necessario autorizacoes = mandar notificaoes (email)
--Dizer estado das pessoas 
--chat
--opcao para lihght mode e dark mode 
--
+-Ao clicar no icon de uma pessoa manda-mos mensagem privada, Podemos deixar o chat para um chat geral de equipa em si
+-Os topicos e projetos, colocar de maneira rapida, ou seja, quando ja temos um card e clicamos em nova tarefa dentro do card, ter um aopcao para colocar o projeto ou o topico 
+-nas funçoes vamos colocar marketing, informatica, e Comandante. Marketing e informatica, têm acesso como membros, e os comandantes, sao, podem criar topicos, criar projetos, pedir tarefas, dar aprovações, adicionar pessoas, etc. o admin tem acesso a tudo. 
+-Os membros normais nao podem mexer nas tarefas dos outros, podem sim pedir uma nova tarefa e edita-la caso se enganem e ficar exposta numa seccao pendente para sasber o que foi pedido, para o membro saber o que tem de fazer, e o próprio membro faz a gestão. Os comandantes também so podem pedir as tarefas mas nao podem mexer no progresso, bem como os membros podem pedir uma tarefa aos comandantes, para aprovoção, o admin tem permissao para mover tudo, caso algo carro mal.
+-criar uma pagina para projetos e topicos, onde este possam ser geridos, isto porque pdemos adiconar documentos, iamgens, videos, e outros, no mesmp topico para que possam veririficar se por exemplo estes podem ser aprovados. 
+-Nos cards ao inves de aparecer tarefas mensais e semanais, aparecem tarefas pendentes, que será onde os membros e comandantes entre si deixam o pedido da tarefa.
+-Ao lado de do botao de equipa colcoar botões para tarefas mensais e tarefas semanais, onde estas possao ser personalizadas e guardadas, também podem guardar documentos, imagens videos, etc. Estas podem ser tambem colocadas de forma rapida no card de um membro ou comandante também. Se calhar faz se uma pagian para gerir tambem estas tarefas, nao sei, escolhe a melhro opcao.
+-Adicinonar grau de uregncia: terá tres tipos, urgente, prioritario, business critical.
+-A copia de seguranca json so pode ser feita pelo admin
+-No hsitorico (As mensais que ninguém concluiu ficam no arquivo do mês a que pertenciam) passam também para o proximo mes
+-Ao inves de ser ausencias, vamos chamar calaendario, e acrescenta o facto de poder marcar reunioes. Em reunioes, fazer com que se possa fazer video chamdas numa sala, possamos partilahr o ecra, se custar muito, apenas arranjar um local onde posssa colocar um link do zoom, ou google, ou teams.

@@ -4,6 +4,7 @@
 export const MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const MONTHS_SHORT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 export const WEEKDAYS_SHORT = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+export const WEEKDAYS_LONG = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
 export const pad = (n: number) => String(n).padStart(2, '0');
 const utc = (s: string) => new Date(`${s}T00:00:00Z`);
@@ -44,6 +45,12 @@ export function dayLabel(s: string): string {
   return `${d} ${MONTHS_SHORT[m - 1]}`;
 }
 export const dayLabelYear = (s: string) => `${dayLabel(s)} ${s.slice(0, 4)}`;
+
+/** "sexta-feira, 14 de novembro" */
+export function longDayLabel(s: string): string {
+  const [, m, d] = s.split('-').map(Number);
+  return `${WEEKDAYS_LONG[weekday(s)]}, ${d} de ${MONTHS[m - 1]}`;
+}
 
 export function rangeLabel(a: string, b: string): string {
   if (a === b) return dayLabel(a);

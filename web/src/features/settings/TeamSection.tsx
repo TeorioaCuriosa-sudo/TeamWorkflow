@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { ApiError, del, errorMessage, patch, post } from '../../api/client';
 import type { Member, Role } from '../../api/types';
+import { ROLE_KEYS, ROLE_LABEL, ROLES_FOR_COMMANDER } from '../../lib/labels';
 import { plural } from '../../lib/text';
 import { useData, useTeam } from '../../state/data';
-import { Avatar } from '../../ui/Avatar';
+import { PersonAvatar } from '../people/PersonAvatar';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Chip';
 import { ColorPicker } from '../../ui/ColorPicker';
@@ -57,8 +58,10 @@ export function TeamSection() {
     <SettingsSection
       title="Equipa"
       hint={team.isAdmin
-        ? 'Cada pessoa tem a sua conta. Só os administradores adicionam e removem pessoas, repõem palavras-passe e mudam funções. Quem deixa de estar visível sai do quadro, mas o histórico mantém-se.'
-        : 'Só os administradores adicionam e removem pessoas. O teu nome, cor e estado mudam-se em “Perfil, estado e avisos”.'}
+        ? 'Cada pessoa tem a sua conta. Os administradores podem tudo; os comandantes também adicionam pessoas. Só os administradores removem pessoas, repõem palavras-passe e mudam funções. Marketing e informática têm acesso de membro. Quem deixa de estar visível sai do quadro, mas o histórico mantém-se.'
+        : team.can.add_people
+          ? 'Como comandante, podes adicionar pessoas (membros, marketing ou informática). Remover pessoas e mudar funções é com os administradores. O teu nome, cor e estado mudam-se em “Perfil, estado e avisos”.'
+          : 'Só os administradores e os comandantes adicionam pessoas. O teu nome, cor e estado mudam-se em “Perfil, estado e avisos”.'}
     >
       <ul className="grid gap-3">
         {team.people.map((m) => {
@@ -66,9 +69,9 @@ export function TeamSection() {
           if (!team.isAdmin) {
             return (
               <li key={m.id} className="flex items-center gap-3">
-                <Avatar name={m.name} color={m.color} size="md" online={m.online} />
+                <PersonAvatar member={m} size="md" online={m.online} />
                 <span className="flex-1 text-sm font-medium text-ink">{m.name}</span>
-                {m.role === 'admin' && <Badge>Administrador</Badge>}
+                {m.role !== 'member' && <Badge>{ROLE_LABEL[m.role]}</Badge>}
                 <span className="text-[13px] text-ink-3">{m.online ? 'Online' : 'Offline'}</span>
               </li>
             );
@@ -76,7 +79,7 @@ export function TeamSection() {
           return (
             <li key={m.id} className="grid gap-3 rounded-xl border border-line bg-surface-2 p-4">
               <div className="flex flex-wrap items-center gap-3">
-                <Avatar name={m.name} color={m.color} size="lg" online={m.online} ringClass="ring-surface-2" />
+                <PersonAvatar member={m} size="lg" online={m.online} ringClass="ring-surface-2" />
                 <CommitInput className="min-w-40 flex-1 basis-40" value={m.name} maxLength={60} aria-label={`Nome de ${m.name}`} onCommit={(v) => void edit(m, { name: v })} />
                 <CommitInput className="min-w-52 flex-1 basis-52" type="email" value={m.email ?? ''} aria-label={`Email de ${m.name}`} onCommit={(v) => void edit(m, { email: v })} />
               </div>
@@ -87,8 +90,7 @@ export function TeamSection() {
                   Função
                   <div className="w-40">
                     <Select value={m.role} aria-label={`Função de ${m.name}`} className="h-8 text-[13px]" onChange={(e) => void edit(m, { role: e.target.value as Role })}>
-                      <option value="member">Membro</option>
-                      <option value="admin">Administrador</option>
+                      {ROLE_KEYS.map((k) => <option key={k} value={k}>{ROLE_LABEL[k]}</option>)}
                     </Select>
                   </div>
                 </label>
@@ -100,7 +102,7 @@ export function TeamSection() {
           );
         })}
       </ul>
-      {team.isAdmin && (
+      {team.can.add_people && (
         <div className="flex justify-end">
           <Button icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>Adicionar pessoa</Button>
         </div>
@@ -124,6 +126,8 @@ export function TeamSection() {
 
 function AddPersonDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (info: { name: string; email: string; password: string | null }) => void }) {
   const { refresh } = useData();
+  const team = useTeam();
+  const roles = team.isAdmin ? ROLE_KEYS : ROLES_FOR_COMMANDER;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('member');
@@ -163,8 +167,7 @@ function AddPersonDialog({ onClose, onCreated }: { onClose: () => void; onCreate
         <Field label="Email"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="off" placeholder="nome@empresa.pt" /></Field>
         <Field label="Função">
           <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            <option value="member">Membro</option>
-            <option value="admin">Administrador</option>
+            {roles.map((k) => <option key={k} value={k}>{ROLE_LABEL[k]}</option>)}
           </Select>
         </Field>
         <Field label="Palavra-passe inicial (opcional)">

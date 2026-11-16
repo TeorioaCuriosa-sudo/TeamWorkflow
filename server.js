@@ -1,5 +1,6 @@
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,6 +14,7 @@ import { getMember, publicMe } from './lib/people.js';
 import { createFx } from './lib/notify.js';
 import { createMailer, renderMail } from './lib/mail.js';
 import { pruneNotifications } from './lib/activity.js';
+import { purgeOrphans } from './lib/files.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -49,6 +51,11 @@ export function createApp(opts = {}) {
   const today = () => todayIn(tz, clock());
   const nowIso = () => clock().toISOString();
 
+  // Os ficheiros anexados ficam ao lado da base de dados (no Docker, no mesmo volume). Em memória (testes), numa pasta temporária.
+  const tempUploads = dbFile === ':memory:' && !opts.uploadsDir;
+  const uploadsDir = opts.uploadsDir ?? (tempUploads ? fs.mkdtempSync(path.join(os.tmpdir(), 'tw-uploads-')) : path.join(path.dirname(dbFile), 'uploads'));
+  const maxUploadBytes = (Number(env.MAX_UPLOAD_MB) > 0 ? Number(env.MAX_UPLOAD_MB) : 50) * 1048576;
+
   const db = openDb(dbFile);
   if (env.SEED_DEMO === '1') seedDemo(db, today(), nowIso());
   const boot = bootstrapAdmin(db, env, nowIso());
@@ -69,6 +76,11 @@ export function createApp(opts = {}) {
   function emit(event, data) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const res of clients.keys()) write(res, payload);
+  }
+  /** Um evento só para estas pessoas (as mensagens privadas não passam por mais ninguém). */
+  function emitTo(memberIds, event, data) {
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    for (const [res, mid] of clients) if (memberIds.includes(mid)) write(res, payload);
   }
   const broadcast = (from = '') => emit('changed', { from, at: Date.now() });
 
@@ -134,6 +146,7 @@ export function createApp(opts = {}) {
     try {
       db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(nowIso());
       pruneNotifications(db, nowIso());
+      purgeOrphans(db, uploadsDir);
     } catch (e) { log.error('Erro na limpeza:', e); }
   };
   maintenance();
@@ -197,7 +210,7 @@ export function createApp(opts = {}) {
   function deliver(fx) {
     if (!mailer.enabled) return;
     for (const m of fx.mails) {
-      const link = m.task_id ? `${appUrl}/#task/${m.task_id}` : appUrl;
+      const link = m.task_id ? `${appUrl}/#task/${m.task_id}` : m.meeting_id ? `${appUrl}/#meeting/${m.meeting_id}` : appUrl;
       const { text, html } = renderMail({ name: m.name, subject: m.subject, lines: m.lines, link, cta: m.cta });
       const p = mailer.send({ to: m.to, subject: `[Teoria Workflow] ${m.subject}`, text, html })
         .then((r) => { if (!r.ok) log.warn(`Email para ${m.to} falhou: ${r.error}`); })
@@ -208,10 +221,10 @@ export function createApp(opts = {}) {
 
   // ---------- rotas ----------
   const routes = [];
-  const add = (method, pattern, handler, { open = false, silent = false, status = null } = {}) => {
+  const add = (method, pattern, handler, { open = false, silent = false, status = null, raw = false } = {}) => {
     const keys = [];
     const re = new RegExp(`^${pattern.replace(/:(\w+)/g, (_, k) => (keys.push(k), '([^/]+)'))}$`);
-    routes.push({ method, re, keys, handler, open, silent, status });
+    routes.push({ method, re, keys, handler, open, silent, status, raw });
   };
 
   add('GET', '/healthz', () => ({ ok: true }), { open: true });
@@ -240,7 +253,7 @@ export function createApp(opts = {}) {
     return { ok: true };
   }, { open: true, silent: true, status: 200 });
 
-  registerRoutes(add, { db, today, nowIso, currentMonth, extraHolidays, mailer, onlineIds, emit, sse });
+  registerRoutes(add, { db, today, nowIso, currentMonth, extraHolidays, mailer, onlineIds, emit, emitTo, sse, uploadsDir, maxUploadBytes });
 
   // ---------- pedidos ----------
   function send(res, status, data) {
@@ -313,7 +326,11 @@ export function createApp(opts = {}) {
 
       const mutating = req.method !== 'GET';
       let body = {};
-      if (req.method === 'POST' || req.method === 'PATCH' || req.method === 'DELETE') {
+      if (route.raw) {
+        // Envio de ficheiros: o próprio handler lê o corpo. O cabeçalho personalizado obriga a um pedido "com autorização"
+        // do browser (CORS), que outros sites não conseguem fazer, por isso substitui aqui a verificação do JSON.
+        if (!req.headers['x-filename']) throw new HttpError(400, 'Falta o nome do ficheiro.');
+      } else if (req.method === 'POST' || req.method === 'PATCH' || req.method === 'DELETE') {
         const hasBody = Number(req.headers['content-length'] || 0) > 0 || req.headers['transfer-encoding'];
         // Exigir JSON impede pedidos cruzados a partir de formulários HTML.
         if (hasBody && !String(req.headers['content-type'] || '').startsWith('application/json')) {
@@ -333,6 +350,7 @@ export function createApp(opts = {}) {
       });
       if (result === RAW) return;
       send(res, route.status ?? (mutating && req.method === 'POST' ? 201 : 200), result ?? { ok: true });
+      if (req.method === 'DELETE') purgeOrphans(db, uploadsDir);
       if (mutating && !route.silent) broadcast(clientId);
       deliver(fx);
     } catch (err) {
@@ -353,13 +371,17 @@ export function createApp(opts = {}) {
     for (const res of clients.keys()) res.end();
     clients.clear();
     return new Promise((resolve) => {
-      server.close(() => { db.close(); resolve(); });
+      server.close(() => {
+        db.close();
+        if (tempUploads) fs.rmSync(uploadsDir, { recursive: true, force: true });
+        resolve();
+      });
       server.closeAllConnections?.();
     });
   }
 
   return {
-    server, db, close, broadcast, currentMonth, maintenance, bootstrap, mailer, appUrl,
+    server, db, close, broadcast, currentMonth, maintenance, bootstrap, mailer, appUrl, uploadsDir,
     flushMail: () => Promise.all([...pendingMail]),
   };
 }

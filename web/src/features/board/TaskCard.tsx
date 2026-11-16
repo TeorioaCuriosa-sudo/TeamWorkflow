@@ -1,13 +1,13 @@
 import type { KeyboardEvent, ReactNode } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Check, Clock, CornerDownRight, FileText, MessageSquare, Play, Repeat, Undo2 } from 'lucide-react';
+import { Check, Clock, CornerDownRight, FileText, HandHelping, MessageSquare, Paperclip, Play, Repeat, Undo2 } from 'lucide-react';
 import { patch } from '../../api/client';
 import type { Task, TaskStatus } from '../../api/types';
 import { cx } from '../../lib/cx';
 import { dayLabel, monthLabel, monthShort } from '../../lib/dates';
 import { useData, useTeam } from '../../state/data';
 import { useDialogs } from '../../state/dialogs';
-import { Badge, Chip } from '../../ui/Chip';
+import { Badge, Chip, UrgencyBadge } from '../../ui/Chip';
 
 function ApprovalBadge({ task }: { task: Task }) {
   const team = useTeam();
@@ -72,6 +72,8 @@ export function CardView({ task: t, readOnly, drag, overlay }: { task: Task; rea
     (listeners?.onKeyDown as ((e: KeyboardEvent<HTMLElement>) => void) | undefined)?.(e);
   };
 
+  // Em Pendentes, mostra quem pediu a tarefa (se não foi a própria pessoa).
+  const requestedBy = t.status === 'todo' && t.requested_by && t.requested_by !== t.member_id ? team.nameOf(t.requested_by) : null;
   const comment = t.last_comment ? `${team.nameOf(t.last_comment.member_id)}: ${t.last_comment.text}` : 'Atualizações';
 
   return (
@@ -108,6 +110,17 @@ export function CardView({ task: t, readOnly, drag, overlay }: { task: Task; rea
 
       <p className={cx('text-[13.5px] leading-snug font-medium break-words', t.status === 'done' ? 'text-ink-2' : 'text-ink')}>{t.title}</p>
 
+      {(t.urgency !== 'normal' || requestedBy) && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <UrgencyBadge urgency={t.urgency} />
+          {requestedBy && (
+            <Badge icon={<HandHelping aria-hidden className="size-3" />} className="max-w-full" >
+              <span className="truncate">Pedido por {requestedBy}</span>
+            </Badge>
+          )}
+        </div>
+      )}
+
       <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-ink-3 empty:hidden">
         <ApprovalBadge task={t} />
         {t.recurring_id && <Meta icon={<Repeat />} title="Repete todos os meses">Mensal</Meta>}
@@ -117,6 +130,7 @@ export function CardView({ task: t, readOnly, drag, overlay }: { task: Task; rea
         )}
         {t.status === 'done' && t.done_at && <Meta icon={<Check />} title="Concluída" className="text-success">{dayLabel(t.done_at.slice(0, 10))}</Meta>}
         {t.comments > 0 && <Meta icon={<MessageSquare />} title={comment}>{t.comments}</Meta>}
+        {t.file_count > 0 && <Meta icon={<Paperclip />} title={t.file_count === 1 ? '1 ficheiro anexado' : `${t.file_count} ficheiros anexados`}>{t.file_count}</Meta>}
         {t.notes && <Meta icon={<FileText />} title="Tem notas" />}
       </div>
 

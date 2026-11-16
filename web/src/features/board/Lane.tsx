@@ -1,11 +1,11 @@
 import { Plus } from 'lucide-react';
 import type { Member } from '../../api/types';
 import { cx } from '../../lib/cx';
-import { COLUMNS, columnOf } from '../../lib/labels';
+import { COLUMNS } from '../../lib/labels';
 import { personState, STATUS_DOT } from '../../lib/people';
-import { useData } from '../../state/data';
+import { useData, useTeam } from '../../state/data';
 import { useDialogs } from '../../state/dialogs';
-import { Avatar } from '../../ui/Avatar';
+import { PersonAvatar } from '../people/PersonAvatar';
 import { Button } from '../../ui/Button';
 import { Card, Progress } from '../../ui/misc';
 import { Column, type DropHint } from './Column';
@@ -24,10 +24,12 @@ export function StatusPill({ member }: { member: Member }) {
   );
 }
 
-/** A faixa de uma pessoa: cabeçalho com progresso e as quatro colunas. */
+/** A faixa de uma pessoa: cabeçalho com progresso e as três colunas. */
 export function Lane({ member, filters, hint }: { member: Member; filters: BoardFilters; hint: DropHint | null }) {
   const { data } = useData();
+  const team = useTeam();
   const { openNewTask } = useDialogs();
+  const requesting = !team.isAdmin && member.id !== team.me.id;
   const mine = data.tasks.filter((t) => t.member_id === member.id);
   const done = mine.filter((t) => t.status === 'done').length;
   const visible = mine.filter(filters.passes);
@@ -36,7 +38,7 @@ export function Lane({ member, filters, hint }: { member: Member; filters: Board
     <Card aria-label={`Tarefas de ${member.name}`} className="overflow-hidden">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar name={member.name} color={member.color} size="lg" online={data.archived ? undefined : member.online} />
+          <PersonAvatar member={member} size="lg" online={data.archived ? undefined : member.online} />
           <div className="min-w-0 leading-tight">
             <h2 className="truncate text-[15px] font-semibold text-ink">{member.name}</h2>
             <p className="num mt-0.5 text-xs text-ink-3">{done} de {mine.length} concluídas</p>
@@ -46,17 +48,17 @@ export function Lane({ member, filters, hint }: { member: Member; filters: Board
         <div className="ml-auto flex items-center gap-4">
           <Progress value={done} max={mine.length} className="hidden w-40 sm:block" />
           {!data.archived && (
-            <Button size="sm" icon={<Plus className="size-4" />} onClick={() => openNewTask(member.id)}>Nova tarefa</Button>
+            <Button size="sm" icon={<Plus className="size-4" />} onClick={() => openNewTask(member.id)}>{requesting ? 'Pedir tarefa' : 'Nova tarefa'}</Button>
           )}
         </div>
       </div>
-      <div className="grid gap-3 border-t border-line p-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 border-t border-line p-3 md:grid-cols-3">
         {COLUMNS.map((c) => (
           <Column
             key={c.key}
             member={member}
             columnKey={c.key}
-            tasks={visible.filter((t) => columnOf(t) === c.key)}
+            tasks={visible.filter((t) => t.status === c.key)}
             readOnly={data.archived}
             filtered={filters.tagFilterActive}
             defaults={{ project: filters.project, topic: filters.topic }}

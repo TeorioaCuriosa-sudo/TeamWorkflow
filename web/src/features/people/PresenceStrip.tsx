@@ -1,11 +1,11 @@
 import { ShieldCheck } from 'lucide-react';
-import { ABSENCE_TYPES } from '../../lib/labels';
+import { ABSENCE_TYPES, ROLE_LABEL } from '../../lib/labels';
 import { cx } from '../../lib/cx';
 import { dayLabel } from '../../lib/dates';
 import { personState, STATUS_DOT } from '../../lib/people';
 import { useData, useTeam } from '../../state/data';
 import { useDialogs } from '../../state/dialogs';
-import { Avatar } from '../../ui/Avatar';
+import { PersonAvatar } from './PersonAvatar';
 
 /** Quem está disponível, ocupado ou ausente. (A barra lateral mostra o mesmo em ecrãs grandes.) */
 export function PresenceStrip({ className }: { className?: string }) {
@@ -24,11 +24,12 @@ export function PresenceStrip({ className }: { className?: string }) {
         const mine = m.id === data.me.id;
         const content = (
           <>
-            <Avatar name={m.name} color={m.color} size="lg" online={m.online} />
+            <PersonAvatar member={m} size="lg" online={m.online} />
             <span className="min-w-0 flex-1 leading-tight">
               <span className="flex items-center gap-1.5 text-sm font-medium text-ink">
                 <span className="truncate">{m.name}</span>
                 {m.role === 'admin' && <ShieldCheck className="size-3.5 shrink-0 text-ink-3" aria-label="Administrador" />}
+                {m.role !== 'admin' && m.role !== 'member' && <span className="shrink-0 rounded bg-surface-3 px-1 py-px text-[10.5px] font-medium text-ink-3">{ROLE_LABEL[m.role]}</span>}
               </span>
               <span className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-3">
                 <span aria-hidden className={cx('size-1.5 shrink-0 rounded-full', STATUS_DOT[st.key])} />

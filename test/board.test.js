@@ -73,7 +73,7 @@ test('recorrentes: nova tarefa recorrente aparece já neste mês', async () => {
   assert.equal(inst.status, 'todo');
 });
 
-test('renovação mensal: transitam semanais/em progresso; mensais por fazer ficam no arquivo; recorrentes renascem', async () => {
+test('renovação mensal: tudo o que ficou por concluir transita (sem duplicar as recorrentes) e as concluídas ficam no arquivo', async () => {
   const t = await team();
   const rec = (await t.call('POST', '/api/recurring', { member_id: 1, title: 'Relatório mensal' })).data;
   const rec2 = (await t.call('POST', '/api/recurring', { member_id: 2, title: 'Faturação' })).data;
@@ -98,15 +98,23 @@ test('renovação mensal: transitam semanais/em progresso; mensais por fazer fic
   assert.equal(byTitle('Relatório mensal').length, 1);
   assert.equal(byTitle('Relatório mensal')[0].status, 'todo');
   assert.equal(byTitle('Relatório mensal')[0].month, '2026-11');
+  // A mensal por concluir transitou e conta como a cópia deste mês: não nasce uma segunda.
   assert.equal(byTitle('Faturação').length, 1);
-  assert.notEqual(byTitle('Faturação')[0].id, billingInst.id);
+  assert.equal(byTitle('Faturação')[0].id, billingInst.id);
+  assert.equal(byTitle('Faturação')[0].origin_month, '2026-10');
+  assert.equal(byTitle('Faturação')[0].month, '2026-11');
 
   const oct = (await t.call('GET', '/api/state?month=2026-10')).data;
   assert.equal(oct.archived, true);
   assert.ok(oct.tasks.find((x) => x.id === flexDone.id));
   assert.ok(oct.tasks.find((x) => x.id === reportInst.id && x.status === 'done'));
-  assert.ok(oct.tasks.find((x) => x.id === billingInst.id && x.status === 'todo'));
+  assert.equal(oct.tasks.find((x) => x.id === billingInst.id), undefined, 'a mensal por concluir saiu de outubro');
   assert.equal(oct.tasks.find((x) => x.id === flexTodo.id), undefined);
+
+  // O histórico lembra o que transitou de outubro: duas semanais/mensais em aberto e a mensal em progresso.
+  const hist = (await t.call('GET', '/api/history')).data;
+  assert.equal(hist.find((h) => h.month === '2026-10').carried_out, 3);
+  assert.equal(hist.find((h) => h.month === '2026-11').carried, 3);
 
   const again = (await t.call('GET', '/api/state')).data;
   assert.equal(again.tasks.length, nov.tasks.length, 'idempotente: voltar a pedir não duplica nada');
@@ -141,6 +149,8 @@ test('apagar recorrente remove só a cópia por fazer deste mês', async () => {
 test('pessoa fora do quadro não gera recorrentes; tem de ficar uma pessoa visível', async () => {
   const t = await team();
   await t.call('POST', '/api/recurring', { member_id: 3, title: 'Tarefa do Bruno' });
+  const octCopy = (await t.call('GET', '/api/state')).data.tasks.find((x) => x.title === 'Tarefa do Bruno');
+  await t.call('PATCH', `/api/tasks/${octCopy.id}`, { status: 'done' });
   await t.call('PATCH', '/api/members/3', { active: false });
   t.setNow('2026-11-03T09:00:00Z');
   const nov = (await t.call('GET', '/api/state')).data;

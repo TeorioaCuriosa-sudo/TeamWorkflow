@@ -11,6 +11,9 @@ interface EventMap {
   changed: { from?: string };
   chat: ChatMessage;
   'chat-deleted': { id: number };
+  /** Mensagem privada (só chega aos dois da conversa). */
+  dm: ChatMessage;
+  'dm-deleted': { id: number; from_id: number; to_id: number };
   /** A ligação caiu e voltou: convém voltar a pedir tudo. */
   reconnected: undefined;
   /** A ligação caiu: pode ser a sessão que terminou. */
@@ -73,6 +76,14 @@ class Live {
     es.addEventListener('chat-deleted', (e) => {
       const data = parse<{ id: number }>(e as MessageEvent);
       if (data) this.emit('chat-deleted', data);
+    });
+    es.addEventListener('dm', (e) => {
+      const data = parse<ChatMessage>(e as MessageEvent);
+      if (data) this.emit('dm', data);
+    });
+    es.addEventListener('dm-deleted', (e) => {
+      const data = parse<{ id: number; from_id: number; to_id: number }>(e as MessageEvent);
+      if (data) this.emit('dm-deleted', data);
     });
   }
 

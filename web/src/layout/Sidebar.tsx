@@ -3,7 +3,7 @@ import { hrefFor } from '../state/route';
 import { personState, STATUS_DOT } from '../lib/people';
 import { useData, useTeam } from '../state/data';
 import type { ViewId } from '../lib/labels';
-import { Avatar } from '../ui/Avatar';
+import { PersonAvatar } from '../features/people/PersonAvatar';
 import { Count } from '../ui/Chip';
 import { Wordmark } from '../ui/Logo';
 import { navEntries } from './nav';
@@ -49,7 +49,7 @@ export function Sidebar({ view }: { view: ViewId }) {
             const st = personState(m, data);
             return (
               <li key={m.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5">
-                <Avatar name={m.name} color={m.color} size="md" online={m.online} ringClass="ring-sidebar" />
+                <PersonAvatar member={m} size="md" online={m.online} ringClass="ring-sidebar" />
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-[13px] font-medium">{m.name}{m.id === data.me.id && <span className="font-normal text-sidebar-ink-2"> (tu)</span>}</p>
                   <p className="flex items-center gap-1.5 truncate text-xs text-sidebar-ink-2">

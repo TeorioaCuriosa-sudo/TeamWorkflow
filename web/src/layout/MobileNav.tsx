@@ -11,7 +11,7 @@ export function MobileNav({ view }: { view: ViewId }) {
   return (
     <nav
       aria-label="Secções"
-      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
       {navEntries(data).map((n) => (
         <a

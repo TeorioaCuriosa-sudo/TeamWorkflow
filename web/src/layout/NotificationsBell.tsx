@@ -18,7 +18,7 @@ interface NotificationList { items: Notification[]; unread: number }
 export function NotificationsBell() {
   const { data, patchState } = useData();
   const team = useTeam();
-  const { openTask } = useDialogs();
+  const { openTask, openMeeting } = useDialogs();
   const toast = useToast();
   const [items, setItems] = useState<Notification[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -102,6 +102,7 @@ export function NotificationsBell() {
                         close();
                         void markRead({ ids: [n.id] });
                         if (n.task_id) openTask(n.task_id);
+                        else if (n.meeting_id) openMeeting(n.meeting_id);
                       }}
                       className="flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left transition-colors hover:bg-surface-3"
                     >

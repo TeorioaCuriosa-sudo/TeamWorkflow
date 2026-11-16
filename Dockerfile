@@ -18,7 +18,7 @@ COPY server.js ./
 COPY lib ./lib
 COPY public ./public
 
-# A base de dados e as cópias diárias ficam em /data (montar como volume).
+# A base de dados, as cópias diárias e os ficheiros anexados (uploads) ficam em /data (montar como volume).
 RUN mkdir -p /data && chown -R node:node /data /app
 USER node
 VOLUME /data

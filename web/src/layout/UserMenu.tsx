@@ -1,4 +1,5 @@
 import { ChevronsUpDown, LogOut, Settings, User } from 'lucide-react';
+import { ROLE_LABEL } from '../lib/labels';
 import { cx } from '../lib/cx';
 import { useData } from '../state/data';
 import { useDialogs } from '../state/dialogs';
@@ -33,7 +34,7 @@ export function UserMenu({ variant }: { variant: 'sidebar' | 'compact' }) {
             <Avatar name={me.name} color={me.color} size="md" />
             <span className="min-w-0 flex-1 leading-tight">
               <span className="block truncate text-[13px] font-medium text-sidebar-ink">{me.name}</span>
-              <span className="block truncate text-xs text-sidebar-ink-2">{me.role === 'admin' ? 'Administrador' : 'Membro'}</span>
+              <span className="block truncate text-xs text-sidebar-ink-2">{ROLE_LABEL[me.role]}</span>
             </span>
             <ChevronsUpDown className="size-4 text-sidebar-ink-2" aria-hidden />
           </button>

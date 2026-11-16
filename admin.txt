@@ -1,0 +1,11 @@
+O email é admin@teoria.local, a não ser que tenhas definido outro em ADMIN_EMAIL. A palavra-passe não dá para ir buscar, porque fica guardada cifrada e nem eu consigo lê-la. Dá para definir uma nova a partir do terminal.
+
+Fecha a plataforma, carregando em Ctrl+C na janela onde está a correr. Abre um terminal dentro da pasta do projeto, como fizeste antes, e escreve:
+
+node server.js --set-password admin@teoria.local NovaPalavraPasse123
+
+Troca “NovaPalavraPasse123” por uma palavra-passe tua, com pelo menos 8 caracteres. Depois volta a arrancar com npm.cmd start, entra com esse email e essa palavra-passe, e a plataforma pede-te logo uma definitiva.
+
+Isto repõe a palavra-passe da base de dados normal, a que usas com npm.cmd start. A da demo, a do iniciar-demo.bat, é à parte: aí o administrador é ana@exemplo.pt com demo1234, e se alguma vez ficar baralhada, apagar a pasta data-demo e abrir de novo recria tudo.
+
+_____________________________________________________________________________________________________________________________________________________________________________________________________________
